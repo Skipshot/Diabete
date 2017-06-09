@@ -9,7 +9,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="SettingsJsonFilename">settings.json</string>
-    <string name="GlycaemiaJsonFilename">glycaemia.json</string>
+    <string name="GlycaemiaJsonFilename">glycaemia</string>
     <string name="strBreakfast">breakfast</string>
     <string name="strLunch">lunch</string>
     <string name="strDinner">dinner</string>

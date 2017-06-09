@@ -1,11 +1,21 @@
 package com.example.fdelahaye.myapplication.Objects;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import com.example.fdelahaye.myapplication.JsonUtil;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by fdelahaye on 29/05/2017.
@@ -30,119 +40,34 @@ public class Settings {
     //region Contructor
     public Settings() {
     }
-
-    //Contructor from settings.json file
-    public Settings(Context context, String filename) {
-        try {
-            if(JsonUtil.fileExists(context, filename)) {
-                //read json file
-                String jsonFile = JsonUtil.readFromFile(context, filename);
-                //convert to json object
-                JSONObject jObj = new JSONObject(jsonFile);
-
-                //add values of Settings object with Json
-                this.date = jObj.getString("date");
-                this.breakfastRatio = (float)jObj.optDouble("breakfast ratio");
-                this.breakfastIndex = (float)jObj.optDouble("breakfast index");
-                this.lunchRatio = (float)jObj.optDouble("lunch ratio");
-                this.lunchIndex = (float)jObj.optDouble("lunch index");
-                this.dinnerRatio = (float)jObj.optDouble("dinner ratio");
-                this.dinnerIndex = (float)jObj.optDouble("dinner index");
-                this.goalBeforeMeal = (short)jObj.optInt("goal before meal");
-                this.goalOutMeal = (short)jObj.optInt("goal out meal");
-                this.hourBreakfast = jObj.optString("hour breakfast");
-                this.hourLunch = jObj.optString("hour lunch");
-                this.hourDinner = jObj.optString("hour dinner");
-                this.notificationHbA1c = jObj.optBoolean("notifications HbA1c");
-                this.delaisNotifHbA1c = jObj.optString("delais notifications HbA1c");
-            }
-        }
-        catch(JSONException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public Settings(String date, short breakfastRatio, float breakfastIndex, short lunchRatio, float lunchIndex, short dinnerRatio, float dinnerIndex, short goalBeforeMeal, short goalOutMeal, String hourBreakfast, String hourLunch, String hourDinner, boolean notificationHbA1c, String delaisNotifHbA1c) {
-        this.date = date;
-        this.breakfastRatio = breakfastRatio;
-        this.breakfastIndex = breakfastIndex;
-        this.lunchRatio = lunchRatio;
-        this.lunchIndex = lunchIndex;
-        this.dinnerRatio = dinnerRatio;
-        this.dinnerIndex = dinnerIndex;
-        this.goalBeforeMeal = goalBeforeMeal;
-        this.goalOutMeal = goalOutMeal;
-        this.hourBreakfast = hourBreakfast;
-        this.hourLunch = hourLunch;
-        this.hourDinner = hourDinner;
-        this.notificationHbA1c = notificationHbA1c;
-        this.delaisNotifHbA1c = delaisNotifHbA1c;
-    }
     //endregion
-
 
     //region Methods
     public static Settings getJsonSettings(Context context, String filename) {
-        try {
-            Settings s = new Settings();
-            if(JsonUtil.fileExists(context, filename)) {
-                //read json file
-                String jsonFile = JsonUtil.readFromFile(context, filename);
-                //convert to json object
-                JSONObject jObj = new JSONObject(jsonFile);
 
-                //add values of Settings object with Json
-                s.setDate(jObj.getString("date"));
-                s.setBreakfastRatio((float)jObj.optDouble("breakfast ratio"));
-                s.setBreakfastIndex((float)jObj.optDouble("breakfast index"));
-                s.setLunchRatio((float)jObj.optDouble("lunch ratio"));
-                s.setLunchIndex((float)jObj.optDouble("lunch index"));
-                s.setDinnerRatio((float)jObj.optDouble("dinner ratio"));
-                s.setDinnerIndex((float)jObj.optDouble("dinner index"));
-                s.setGoalBeforeMeal((short)jObj.optInt("goal before meal"));
-                s.setGoalOutMeal((short)jObj.optInt("goal out meal"));
-                s.setHourBreakfast(jObj.optString("hour breakfast"));
-                s.setHourLunch(jObj.optString("hour lunch"));
-                s.setHourDinner(jObj.optString("hour dinner"));
-                s.setNotificationHbA1c(jObj.optBoolean("notifications HbA1c"));
-                s.setDelaisNotifHbA1c(jObj.optString("delais notifications HbA1c"));
-            }
+        Gson gson = new Gson();
+        Settings settings = new Settings();
 
-            return s;
+        if(JsonUtil.fileExists(context, filename)) {
+            //read json file
+            String jsonFile = JsonUtil.readFromFile(context, filename);
+            //convert string jsonFile to List<Glycaemia>
+            settings = gson.fromJson(jsonFile, new TypeToken<Settings>(){}.getType());
         }
-        catch(JSONException ex) {
-            ex.printStackTrace();
-        }
-
-        return null;
+        return settings;
     }
 
-    public static JSONObject setJsonSettings(Settings settings, Context context, String filename) {
-        try {
-            JSONObject jsonObj = new JSONObject();
-            jsonObj.put("date", settings.getDate());
-            jsonObj.put("breakfast ratio", settings.getBreakfastRatio());
-            jsonObj.put("breakfast index", settings.getBreakfastIndex());
-            jsonObj.put("lunch ratio", settings.getLunchRatio());
-            jsonObj.put("lunch index", settings.getLunchIndex());
-            jsonObj.put("dinner ratio", settings.getDinnerRatio());
-            jsonObj.put("dinner index", settings.getDinnerIndex());
-            jsonObj.put("goal before meal", settings.getGoalBeforeMeal());
-            jsonObj.put("goal out meal", settings.getGoalOutMeal());
-            jsonObj.put("hour breakfast", settings.getHourBreakfast());
-            jsonObj.put("hour lunch", settings.getHourLunch());
-            jsonObj.put("hour dinner", settings.getHourDinner());
-            jsonObj.put("notifications HbA1c", settings.isNotificationHbA1c());
-            jsonObj.put("delais notifications HbA1c", settings.getDelaisNotifHbA1c());
+    public static void update(Settings settings, Context context, String filename) {
+        settings.setDate(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        JsonUtil.writeToFile(new Gson().toJson(settings), context, filename);
+    }
 
-            JsonUtil.writeToFile(jsonObj.toString(), context, filename);
-
-            return jsonObj;
-        }
-        catch(JSONException ex) {
-            ex.printStackTrace();
-        }
-        return null;
+    public boolean isComplete() {
+        return this.breakfastIndex > 0 && this.breakfastRatio > 0 &&
+                this.lunchIndex > 0 && this.lunchRatio > 0 &&
+                this.dinnerIndex > 0 && this.dinnerRatio > 0 &&
+                this.goalBeforeMeal > 0 && this.goalOutMeal > 0 &&
+                !TextUtils.isEmpty(this.hourBreakfast) && !TextUtils.isEmpty(this.hourLunch) && !TextUtils.isEmpty(this.hourDinner);
     }
     //endregion
 

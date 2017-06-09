@@ -35,7 +35,10 @@
                     android:id="@+id/edtBreakfastRatio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
+                    android:inputType="numberDecimal"
+                    android:maxLength="5"
+                    android:digits="0123456789."
+                    android:hint="0.0"/>
             </LinearLayout>
 
             <LinearLayout
@@ -53,7 +56,10 @@
                     android:id="@+id/edtBreakfastIndex"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
+                    android:inputType="numberDecimal"
+                    android:maxLength="5"
+                    android:digits="0123456789."
+                    android:hint="0.0"/>
             </LinearLayout>
 
             <View
@@ -83,7 +89,10 @@
                     android:id="@+id/edtLunchRatio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
+                    android:inputType="numberDecimal"
+                    android:maxLength="5"
+                    android:digits="0123456789."
+                    android:hint="0.0"/>
             </LinearLayout>
 
             <LinearLayout
@@ -101,7 +110,10 @@
                     android:id="@+id/edtLunchIndex"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
+                    android:inputType="numberDecimal"
+                    android:maxLength="5"
+                    android:digits="0123456789."
+                    android:hint="0.0"/>
             </LinearLayout>
 
             <View
@@ -131,7 +143,10 @@
                     android:id="@+id/edtDinnerRatio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
+                    android:inputType="numberDecimal"
+                    android:maxLength="5"
+                    android:digits="0123456789."
+                    android:hint="0.0"/>
             </LinearLayout>
 
             <LinearLayout
@@ -149,7 +164,10 @@
                     android:id="@+id/edtDinnerIndex"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
+                    android:inputType="numberDecimal"
+                    android:maxLength="5"
+                    android:digits="0123456789."
+                    android:hint="0.0"/>
             </LinearLayout>
 
             <View
@@ -173,7 +191,10 @@
                     android:id="@+id/edtGoalOutMeal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="number" />
+                    android:inputType="number"
+                    android:maxLength="3"
+                    android:digits="0123456789"
+                    android:hint="000"/>
             </LinearLayout>
 
             <LinearLayout
@@ -191,7 +212,10 @@
                     android:id="@+id/edtGoalBeforeMeal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="number" />
+                    android:inputType="number"
+                    android:maxLength="3"
+                    android:digits="0123456789"
+                    android:hint="000"/>
             </LinearLayout>
 
             <View
@@ -257,7 +281,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ems="10"
-                    android:inputType="time" />
+                    android:inputType="time"
+                    android:maxLength="5"
+                    android:digits="0123456789:"
+                    android:hint="00:00"/>
             </LinearLayout>
             <!--*********** Lunch **********-->
             <LinearLayout
@@ -274,7 +301,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ems="10"
-                    android:inputType="time" />
+                    android:inputType="time"
+                    android:maxLength="5"
+                    android:digits="0123456789:"
+                    android:hint="00:00"/>
             </LinearLayout>
                 <!--*********** Dinner **********-->
             <LinearLayout
@@ -291,7 +321,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ems="10"
-                    android:inputType="time" />
+                    android:inputType="time"
+                    android:maxLength="5"
+                    android:digits="0123456789:"
+                    android:hint="00:00"/>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

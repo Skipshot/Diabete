@@ -14,6 +14,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -140,6 +142,48 @@ public class Glycaemia {
         }
 
         return todayList;
+    }
+
+    public static ArrayList<Glycaemia> getRemindGlycaemiaList(ArrayList<Glycaemia> glycaemiaList, String timeOfTheDay) {
+        if(glycaemiaList.size() <= 0) return null;
+
+        ArrayList<Glycaemia> remindList = new ArrayList<Glycaemia>();
+
+        int i = 0;
+
+        //sort objects by descending
+        Collections.sort(glycaemiaList, new Comparator<Glycaemia>() {
+            @Override
+            public int compare(Glycaemia o1, Glycaemia o2) {
+                try {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+                    Calendar c1 = Calendar.getInstance();
+                    c1.setTime(sdf.parse(o1.getDate()));
+
+                    Calendar c2 = Calendar.getInstance();
+                    c2.setTime(sdf.parse(o2.getDate()));
+
+                    return c2.compareTo(c1);        //descending
+                    // return c1.compareTo(c2);     //ascending
+                    //return o1.getDate().compareTo(o2.getDate());      //origin
+                }
+                catch (ParseException ex) {
+                    ex.printStackTrace();
+                }
+                return 0;
+            }
+        });
+
+        for (Glycaemia glycaemia : glycaemiaList) {
+            if (timeOfTheDay.equals(glycaemia.getTimeOfTheDay())) {
+                remindList.add(glycaemia);
+                i++;
+            }
+            if(i >= 7) break;
+        }
+
+        return remindList;
     }
 
     public static void WriteGlycaemiaFile(List<Glycaemia> glycaemiaList, Context context, String filename) {

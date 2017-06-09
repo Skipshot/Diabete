@@ -58,17 +58,12 @@ public class MainActivity extends AppCompatActivity
         TestFragment fragmentMain = new TestFragment();
         getSupportFragmentManager().beginTransaction().replace(R.id.mainFrame,fragmentMain).commit();*/
 
-        prefs = getSharedPreferences("com.example.fdelahaye.myapplication", MODE_PRIVATE);
-
         //NOTE:  Checks first item in the navigation drawer initially and init first fragment to show
-        if (prefs.getBoolean("firstrun", true)) {
+        if (!JsonUtil.fileExists(getApplicationContext(), getString(R.string.SettingsJsonFilename))) {
             //First run : show settings
             navigationView.setCheckedItem(R.id.nav_fragment_settings);
             SettingsFragment fragmentMain = new SettingsFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.mainFrame,fragmentMain).commit();
-
-            // using the following line to edit/commit prefs
-            prefs.edit().putBoolean("firstrun", false).commit();
         } else {
             //Next runs : show check fragment
             navigationView.setCheckedItem(R.id.nav_fragment_check);
