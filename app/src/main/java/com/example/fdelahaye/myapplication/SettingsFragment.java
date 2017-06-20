@@ -83,7 +83,7 @@ public class SettingsFragment extends Fragment {
 
         DisplayActionBar();
 
-        spinDelaisNotifHbA1c = (Spinner)view.findViewById(R.id.spinDelaisNotifHbA1c);
+        spinDelaisNotifHbA1c = (Spinner) view.findViewById(R.id.spinDelaisNotifHbA1c);
         linlayDelaisNotifHbA1c = (LinearLayout) view.findViewById(R.id.linlayDelaisNotifHbA1c);
         tbNotifHbA1c = (ToggleButton) view.findViewById(R.id.tbNotifHbA1c);
         edtBreakfastRatio = (EditText) view.findViewById(R.id.edtBreakfastRatio);

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Diabete</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -13,4 +13,5 @@
     <string name="strBreakfast">breakfast</string>
     <string name="strLunch">lunch</string>
     <string name="strDinner">dinner</string>
+    <string name="strNouveauControleEnregistre">Nouveau contrôle enregistré !</string>
 </resources>

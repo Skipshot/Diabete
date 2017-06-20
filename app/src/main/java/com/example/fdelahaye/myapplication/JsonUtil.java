@@ -22,34 +22,6 @@ import java.io.OutputStreamWriter;
 
 public class JsonUtil {
 
-    public static String Addtest(Context context, String test, String fileName) {
-        try {
-            if(!fileExists(context, fileName)) {
-                //read json file
-                String jsonFile = readFromFile(context, fileName);
-                //convert to json object
-                JSONObject jObj = new JSONObject(jsonFile);
-            }
-            //add new object to json
-            //String jsonGlycaemia = toJsonGlycaemia(glycaemia);
-            //write new json file
-            writeToFile(test, context, fileName);
-
-
-            return readFromFile(context,"test.txt");
-        }
-        catch(JSONException ex) {
-            ex.printStackTrace();
-        }
-        return null;
-    }
-
-    //region Glycaemia
-
-    //endregion
-
-
-    //region Utils
     public static void writeToFile(String data, Context context, String fileName) {
         try {
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(fileName, Context.MODE_PRIVATE));
@@ -98,5 +70,4 @@ public class JsonUtil {
         }
         return true;
     }
-    //endregion
 }

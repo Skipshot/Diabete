@@ -24,7 +24,8 @@ import java.util.List;
  */
 
 public class Glycaemia {
-    private String date;
+    private String dateCreate;
+    private String dateUpdate;
     private String timeOfTheDay;
     private short glucoseCheck;
     private short glucoseFood;
@@ -60,39 +61,9 @@ public class Glycaemia {
     //region Constructor
     public Glycaemia() {}
 
-    public Glycaemia(Context context, String filename) {
-        try {
-            if(JsonUtil.fileExists(context, filename)) {
-
-
-                //read json file
-                String jsonFile = JsonUtil.readFromFile(context, filename);
-                //convert to json object
-                JSONObject jObj = new JSONObject(jsonFile);
-
-                //add values of Settings object with Json
-                this.date = jObj.optString("date");
-                this.timeOfTheDay = jObj.optString("time of the day");
-                this.glucoseCheck = (short)jObj.optInt("glucose ckeck");
-                this.glucoseFood = (short)jObj.optInt("glucose food");
-                this.insulineMeal = (float)jObj.optDouble("insuline meal");
-                this.insulineTreat = (float)jObj.optDouble("insuline treat");
-                this.bolus = (float)jObj.optDouble("bolus");
-                this.ratio = (float)jObj.optDouble("ratio");
-                this.indexTreat = (float)jObj.optDouble("index treat");
-                this.objective = (float)jObj.optDouble("objective");
-                this.acetone = Float.parseFloat(jObj.get("acetone").toString());
-                this.injectionBody = jObj.optString("injection body");
-                this.comment = jObj.optString("comment");
-            }
-        }
-        catch(JSONException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public Glycaemia(String date, String timeOfTheDay, short glucoseCheck, short glucoseFood, float insulineMeal, float insulineTreat, float bolus, float ratio, float indexTreat, float objective, Float acetone, String injectionBody, String comment) {
-        this.date = date;
+    public Glycaemia(String dateCreate, String dateUpdate, String timeOfTheDay, short glucoseCheck, short glucoseFood, float insulineMeal, float insulineTreat, float bolus, float ratio, float indexTreat, float objective, Float acetone, String injectionBody, String comment) {
+        this.dateCreate = dateCreate;
+        this.dateUpdate = dateUpdate;
         this.timeOfTheDay = timeOfTheDay;
         this.glucoseCheck = glucoseCheck;
         this.glucoseFood = glucoseFood;
@@ -129,7 +100,7 @@ public class Glycaemia {
             for (Glycaemia glycaemia : glycaemiaList) {
                 Calendar calGlycaemia = Calendar.getInstance();
                 Calendar calToday = Calendar.getInstance();
-                calGlycaemia.setTime(sdf.parse(glycaemia.getDate()));
+                calGlycaemia.setTime(sdf.parse(glycaemia.getDateCreate()));
 
                 if (calGlycaemia.get(Calendar.YEAR) == calToday.get(Calendar.YEAR) &&
                     calGlycaemia.get(Calendar.DAY_OF_YEAR) == calToday.get(Calendar.DAY_OF_YEAR)) {
@@ -159,10 +130,10 @@ public class Glycaemia {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
                     Calendar c1 = Calendar.getInstance();
-                    c1.setTime(sdf.parse(o1.getDate()));
+                    c1.setTime(sdf.parse(o1.getDateCreate()));
 
                     Calendar c2 = Calendar.getInstance();
-                    c2.setTime(sdf.parse(o2.getDate()));
+                    c2.setTime(sdf.parse(o2.getDateCreate()));
 
                     return c2.compareTo(c1);        //descending
                     // return c1.compareTo(c2);     //ascending
@@ -192,12 +163,20 @@ public class Glycaemia {
     //endregion
 
     //region Getters & Setters
-    public String getDate() {
-        return date;
+    public String getDateCreate() {
+        return dateCreate;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setDateCreate(String date) {
+        this.dateCreate = date;
+    }
+
+    public String getDateUpdate() {
+        return dateUpdate;
+    }
+
+    public void setDateUpdate(String dateUpdate) {
+        this.dateUpdate = dateUpdate;
     }
 
     public short getGlucoseCheck() {
