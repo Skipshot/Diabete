@@ -24,6 +24,10 @@ public class MainActivity extends AppCompatActivity
         implements
         CheckFragment.OnFragmentInteractionListener,
         SettingsFragment.OnFragmentInteractionListener,
+        HbA1cGraphFragment.OnFragmentInteractionListener,
+        HbA1cTabFragment.OnFragmentInteractionListener,
+        GlycaemiaGraphFragment.OnFragmentInteractionListener,
+        GlycaemiaTabFragment.OnFragmentInteractionListener,
 
         NavigationView.OnNavigationItemSelectedListener {
 
@@ -54,10 +58,6 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        /*navigationView.setCheckedItem(R.id.nav_fragment_test);
-        TestFragment fragmentMain = new TestFragment();
-        getSupportFragmentManager().beginTransaction().replace(R.id.mainFrame,fragmentMain).commit();*/
-
         //NOTE:  Checks first item in the navigation drawer initially and init first fragment to show
         if (!JsonUtil.fileExists(getApplicationContext(), getString(R.string.SettingsJsonFilename))) {
             //First run : show settings
@@ -67,7 +67,8 @@ public class MainActivity extends AppCompatActivity
         } else {
             //Next runs : show check fragment
             navigationView.setCheckedItem(R.id.nav_fragment_check);
-            CheckFragment fragmentMain = new CheckFragment();
+            //CheckFragment fragmentMain = new CheckFragment();
+            GlycaemiaTabFragment fragmentMain = new GlycaemiaTabFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.mainFrame, fragmentMain).commit();
         }
     }
@@ -114,6 +115,14 @@ public class MainActivity extends AppCompatActivity
             fragment = new SettingsFragment();
         } else if(id == R.id.nav_fragment_check) {
             fragment = new CheckFragment();
+        } else if(id == R.id.nav_fragment_HbA1c_graph) {
+            fragment = new HbA1cGraphFragment();
+        } else if(id == R.id.nav_fragment_HbA1c_tab) {
+            fragment = new HbA1cTabFragment();
+        } else if(id == R.id.nav_fragment_glycaemia_graph) {
+            fragment = new GlycaemiaGraphFragment();
+        } else if(id == R.id.nav_fragment_glycaemia_tab) {
+            fragment = new GlycaemiaTabFragment();
         }
 
         //NOTE: Fragment changing code

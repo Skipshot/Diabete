@@ -75,7 +75,7 @@ public class SettingsFragment extends Fragment {
         // NOTE : We are calling the onFragmentInteraction() declared in the MainActivity
         // ie we are sending "Fragment 1" as title parameter when fragment1 is activated
         if (mListener != null) {
-            mListener.onFragmentInteraction("Fragment Settings");
+            mListener.onFragmentInteraction("Paramètres");
         }
 
         //get Settings object from Json file

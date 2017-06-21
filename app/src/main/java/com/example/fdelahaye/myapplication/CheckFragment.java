@@ -72,7 +72,7 @@ public class CheckFragment extends Fragment {
         // NOTE : We are calling the onFragmentInteraction() declared in the MainActivity
         // ie we are sending "Fragment 1" as title parameter when fragment1 is activated
         if (mListener != null) {
-            mListener.onFragmentInteraction("Fragment Check");
+            mListener.onFragmentInteraction("Contrôle glycémique");
         }
 
         btnGlucoseValidation = (Button)view.findViewById(R.id.btnGlucoseValidation);
@@ -353,27 +353,27 @@ public class CheckFragment extends Fragment {
             llHead.setOrientation(LinearLayout.HORIZONTAL);
             llHead.setWeightSum(15);
 
-            TextView tvHead1 = AddRow("Date");
+            TextView tvHead1 = AddCell("Date");
             tvHead1.setLayoutParams(new LinearLayout.LayoutParams(300, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead1);
 
-            TextView tvHead2 = AddRow("Contrôle\r\nglycémique");
+            TextView tvHead2 = AddCell("Contrôle\r\nglycémique");
             tvHead2.setLayoutParams(new LinearLayout.LayoutParams(200, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead2);
 
-            TextView tvHead3 = AddRow("Glucide\r\nrepas");
+            TextView tvHead3 = AddCell("Glucide\r\nrepas");
             tvHead3.setLayoutParams(new LinearLayout.LayoutParams(150, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead3);
 
-            TextView tvHead4 = AddRow("Insuline\r\nalimentation");
+            TextView tvHead4 = AddCell("Insuline\r\nalimentation");
             tvHead4.setLayoutParams(new LinearLayout.LayoutParams(220, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead4);
 
-            TextView tvHead5 = AddRow("Insuline\r\nsoin");
+            TextView tvHead5 = AddCell("Insuline\r\nsoin");
             tvHead5.setLayoutParams(new LinearLayout.LayoutParams(150, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead5);
 
-            TextView tvHead6 = AddRow("Bolus");
+            TextView tvHead6 = AddCell("Bolus");
             tvHead6.setLayoutParams(new LinearLayout.LayoutParams(100, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead6);
 
@@ -400,27 +400,27 @@ public class CheckFragment extends Fragment {
                 });
 
 
-                TextView tv1 = AddRow( g.getDateCreate().replace(" ", "\r\n") );                                        //Date
+                TextView tv1 = AddCell( g.getDateCreate().replace(" ", "\r\n") );                                        //Date
                 tv1.setLayoutParams(new LinearLayout.LayoutParams(300, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv1);
 
-                TextView tv2 = AddRow( g.getGlucoseCheck() > 0 ? String.valueOf( g.getGlucoseCheck() ) : "-" );         //Glucose Check
+                TextView tv2 = AddCell( g.getGlucoseCheck() > 0 ? String.valueOf( g.getGlucoseCheck() ) : "-" );         //Glucose Check
                 tv2.setLayoutParams(new LinearLayout.LayoutParams(200, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv2);
 
-                TextView tv3 = AddRow( g.getGlucoseFood() > 0 ? String.valueOf( g.getGlucoseFood() ) : "-" );           //Glucose Food
+                TextView tv3 = AddCell( g.getGlucoseFood() > 0 ? String.valueOf( g.getGlucoseFood() ) : "-" );           //Glucose Food
                 tv3.setLayoutParams(new LinearLayout.LayoutParams(150, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv3);
 
-                TextView tv4 = AddRow( g.getInsulineMeal() > 0 ? String.format( "%.2f", g.getInsulineMeal() ) : "-" );  //Insuline Meal
+                TextView tv4 = AddCell( g.getInsulineMeal() > 0 ? String.format( "%.2f", g.getInsulineMeal() ) : "-" );  //Insuline Meal
                 tv4.setLayoutParams(new LinearLayout.LayoutParams(220, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv4);
 
-                TextView tv5 = AddRow( g.getInsulineTreat() > 0 ? String.format( "%.2f", g.getInsulineTreat() ) : "-" );//Insuline Treat
+                TextView tv5 = AddCell( g.getInsulineTreat() > 0 ? String.format( "%.2f", g.getInsulineTreat() ) : "-" );//Insuline Treat
                 tv5.setLayoutParams(new LinearLayout.LayoutParams(150, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv5);
 
-                TextView tv6 = AddRow( g.getBolus() > 0 ? String.format( "%.2f", g.getBolus() ) : "-" );                //Bolus
+                TextView tv6 = AddCell( g.getBolus() > 0 ? String.format( "%.2f", g.getBolus() ) : "-" );                //Bolus
                 tv6.setLayoutParams(new LinearLayout.LayoutParams(100, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv6);
 
@@ -436,7 +436,8 @@ public class CheckFragment extends Fragment {
     }
 
 
-    private TextView AddRow(String text) {
+    //region Utils
+    private TextView AddCell(String text) {
         TextView tv = new TextView(getActivity());
         tv.setText(text);
         tv.setGravity(Gravity.CENTER);
@@ -475,7 +476,7 @@ public class CheckFragment extends Fragment {
         else
             return !TextUtils.isEmpty(edtGlucoseCheck.getText().toString());
     }
-
+    //endregion
 
 
     // TODO: Rename method, update argument and hook method into UI event

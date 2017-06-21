@@ -10,6 +10,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Type;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -157,9 +159,80 @@ public class Glycaemia {
         return remindList;
     }
 
+    public static ArrayList<Glycaemia> getDateStartStopGlycaemiaList(Context context, String baseFilename, Date dStart, Date dStop) {
+        ArrayList<Glycaemia> glycaemiaList = new ArrayList<>();
+
+        if(dStart.after(dStop)) {
+            Date temp = dStart;
+            dStart = dStop;
+            dStop = temp;
+        }
+
+        Calendar calStart = Calendar.getInstance();
+        calStart.setTime(dStart);
+        Calendar calStop = Calendar.getInstance();
+        calStop.setTime(dStop);
+
+        int monthStart = calStart.get(Calendar.MONTH) + 1 ;
+        int yearStart = calStart.get(Calendar.YEAR);
+
+        int monthStop = calStop.get(Calendar.MONTH) + 1;
+        int yearStop = calStop.get(Calendar.YEAR);
+
+        for (int year = yearStart; year <= yearStop; year++) {   //for each year between start and stop
+            for (int month = monthStart; month <= monthStop; month++) {  //for each month between start and stop
+                glycaemiaList.addAll( getGlycaemiaList(context, String.format("%s%s-%s.json", baseFilename, year, month) ) );
+            }
+        }
+
+        //TODO : foreach with iterator, need to transform iterator to arraylist
+        for (Iterator<Glycaemia> iterator = glycaemiaList.iterator(); iterator.hasNext();) {
+            Glycaemia g = iterator.next();
+            Date currentDate = parseDate(g.getDateCreate());
+            if (currentDate.before(dStart) || currentDate.after(dStop)) {
+                iterator.remove();
+            }
+        }
+
+        //sort objects by descending
+        Collections.sort(glycaemiaList, new Comparator<Glycaemia>() {
+            @Override
+            public int compare(Glycaemia o1, Glycaemia o2) {
+                try {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+                    Calendar c1 = Calendar.getInstance();
+                    c1.setTime(sdf.parse(o1.getDateCreate()));
+
+                    Calendar c2 = Calendar.getInstance();
+                    c2.setTime(sdf.parse(o2.getDateCreate()));
+
+                    return c2.compareTo(c1);        //descending
+                    // return c1.compareTo(c2);     //ascending
+                    //return o1.getDate().compareTo(o2.getDate());      //origin
+                }
+                catch (ParseException ex) {
+                    ex.printStackTrace();
+                }
+                return 0;
+            }
+        });
+
+        return glycaemiaList;
+    }
+
     public static void WriteGlycaemiaFile(List<Glycaemia> glycaemiaList, Context context, String filename) {
         JsonUtil.writeToFile(new Gson().toJson(glycaemiaList), context, filename);
     }
+
+    private static Date parseDate(String date) {
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd").parse(date);
+        } catch (java.text.ParseException e) {
+            return new Date(0);
+        }
+    }
+
     //endregion
 
     //region Getters & Setters

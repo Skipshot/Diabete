@@ -17,7 +17,7 @@ public abstract class Validation  implements TextWatcher {
 
     // Regular Expression
     // you can change the expression based on your need
-    private static final String DECIMAL_REGEX = "^[0-9]*\\.[0-9]*$";
+    private static final String DECIMAL_REGEX = "^\\d{1,}\\.\\d{1,}$";
     private static final String NUMBER_REGEX = "^[0-9]*$";
     private static final String TIME_REGEX = "^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$";
     /*private static final String EMAIL_REGEX = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
