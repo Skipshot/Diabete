@@ -3,4 +3,13 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="colorGraphBreakfast">#95d140</color>
+    <color name="colorGraphMorning">#7bae2e</color>
+    <color name="colorGraphLunch">#bfca25</color>
+    <color name="colorGraphAfternoon">#ff9640</color>
+    <color name="colorGraphDinner">#ea6822</color>
+    <color name="colorGraphSleep">#0c2c94</color>
+    <color name="colorGraphNight">#041849</color>
+
 </resources>

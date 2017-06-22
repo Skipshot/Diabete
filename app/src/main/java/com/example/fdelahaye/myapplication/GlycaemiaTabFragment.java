@@ -106,10 +106,7 @@ public class GlycaemiaTabFragment extends Fragment {
                 dStart = parseDate(year + "/" + month + "/" + dayOfMonth);
                 tvDateStart.setText("Du : " + android.text.format.DateFormat.format("yyyy/MM/dd", dStart));
 
-                glycaemiaList = Glycaemia.getGlycaemiaList(getActivity(), String.format("%s%s-%s.json", getString(R.string.GlycaemiaJsonFilename), year, month));
-                if(glycaemiaList != null && glycaemiaList.size() > 0) {
-                    BindContent();
-                }
+                BindContent();
             }
         };
 
@@ -120,10 +117,7 @@ public class GlycaemiaTabFragment extends Fragment {
                 dStop = parseDate(year + "/" + month + "/" + dayOfMonth);
                 tvDateStop.setText(" Au : " + android.text.format.DateFormat.format("yyyy/MM/dd", dStop));
 
-                glycaemiaList = Glycaemia.getGlycaemiaList(getActivity(), String.format("%s%s-%s.json", getString(R.string.GlycaemiaJsonFilename), year, month));
-                if(glycaemiaList != null && glycaemiaList.size() > 0) {
-                    BindContent();
-                }
+                BindContent();
             }
         };
 
