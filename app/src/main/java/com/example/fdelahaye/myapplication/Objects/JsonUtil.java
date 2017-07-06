@@ -1,4 +1,4 @@
-package com.example.fdelahaye.myapplication;
+package com.example.fdelahaye.myapplication.Objects;
 
 import android.content.Context;
 import android.util.Log;

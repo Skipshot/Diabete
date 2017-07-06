@@ -1,0 +1,68 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.fdelahaye.myapplication.HbA1cFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tvHbA1cCheck"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HbA1c :" />
+            <EditText
+                android:id="@+id/edtHbA1cCheck"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:maxLength="5"
+                android:digits="0123456789."
+                android:hint="00.00"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnHbA1cValidation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Saisir" />
+        <TextView
+            android:id="@+id/tvResult"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tvDateStart"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textSize="25dp"
+                android:text="Du :"/>
+            <TextView
+                android:id="@+id/tvDateStop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textSize="25dp"
+                android:text="Au :"/>
+        </LinearLayout>
+        <lecho.lib.hellocharts.view.BubbleChartView
+            android:id="@+id/chart"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+        </lecho.lib.hellocharts.view.BubbleChartView>
+
+    </LinearLayout>
+</FrameLayout>

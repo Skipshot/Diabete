@@ -1,24 +1,42 @@
 package com.example.fdelahaye.myapplication;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.print.PrintAttributes;
+import android.print.pdf.PrintedPdfDocument;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.fdelahaye.myapplication.Objects.Glycaemia;
+import com.example.fdelahaye.myapplication.Objects.HbA1c;
 import com.example.fdelahaye.myapplication.Objects.Utils;
+import com.itextpdf.text.BadElementException;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Image;
+import com.itextpdf.text.pdf.PdfWriter;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -30,7 +48,6 @@ import lecho.lib.hellocharts.model.Axis;
 import lecho.lib.hellocharts.model.AxisValue;
 import lecho.lib.hellocharts.model.BubbleChartData;
 import lecho.lib.hellocharts.model.BubbleValue;
-import lecho.lib.hellocharts.model.PointValue;
 import lecho.lib.hellocharts.model.ValueShape;
 import lecho.lib.hellocharts.util.ChartUtils;
 import lecho.lib.hellocharts.view.BubbleChartView;
@@ -39,16 +56,18 @@ import lecho.lib.hellocharts.view.BubbleChartView;
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link GlycaemiaGraphFragment.OnFragmentInteractionListener} interface
+ * {@link HbA1cFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
  */
-public class GlycaemiaGraphFragment extends Fragment {
+public class HbA1cFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
-    private TextView tvDateStart, tvDateStop;
+    private EditText edtHbA1cCheck;
+    private Button btnHbA1cValidation;
+    private TextView tvResult, tvDateStart, tvDateStop;
 
-    private ArrayList<Glycaemia> glycaemiaList;
+    private ArrayList<HbA1c> hbA1cList;
 
     private DatePickerDialog.OnDateSetListener mDataSetListenerStart, mDataSetListenerStop;
     private Calendar cal;
@@ -62,8 +81,7 @@ public class GlycaemiaGraphFragment extends Fragment {
     private boolean hasLabels = false;
     private boolean hasLabelForSelected = false;
 
-
-    public GlycaemiaGraphFragment() {
+    public HbA1cFragment() {
         // Required empty public constructor
     }
 
@@ -72,7 +90,7 @@ public class GlycaemiaGraphFragment extends Fragment {
         //hide all elements in OptionsMenu
         menu.findItem(R.id.action_pdf).setVisible(false);
         menu.findItem(R.id.action_excel).setVisible(false);
-        menu.findItem(R.id.action_csv).setVisible(false);
+        menu.findItem(R.id.action_csv).setVisible(true);
     }
 
     @Override
@@ -85,7 +103,7 @@ public class GlycaemiaGraphFragment extends Fragment {
                 return true;
             }
             case R.id.action_csv : {
-                return true;
+                exportCSV();
             }
         }
         return super.onOptionsItemSelected(item);
@@ -101,18 +119,22 @@ public class GlycaemiaGraphFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_glycaemia_graph, container, false);
+        View view = inflater.inflate(R.layout.fragment_hba1c, container, false);
+
         // NOTE : We are calling the onFragmentInteraction() declared in the MainActivity
         // ie we are sending "Fragment 1" as title parameter when fragment1 is activated
         if (mListener != null) {
-            mListener.onFragmentInteraction("Graphique des glycémies");
+            mListener.onFragmentInteraction("Contrôle HbA1c");
         }
+
+        edtHbA1cCheck = (EditText) view.findViewById(R.id.edtHbA1cCheck);
+        btnHbA1cValidation = (Button) view.findViewById(R.id.btnHbA1cValidation);
+        tvResult = (TextView) view.findViewById(R.id.tvResult);
 
         tvDateStart = (TextView) view.findViewById(R.id.tvDateStart);
         tvDateStop = (TextView) view.findViewById(R.id.tvDateStop);
         chart = (BubbleChartView) view.findViewById(R.id.chart);
-        //chart.setOnValueTouchListener(new ValueTouchListener());
-        //add listener
+
         chart.setOnValueTouchListener(new BubbleChartOnValueSelectListener() {
             @Override public void onValueSelected(int bubbleIndex, BubbleValue value) {
                 Toast.makeText(getActivity(), "Selected: " + value, Toast.LENGTH_SHORT).show();
@@ -125,21 +147,32 @@ public class GlycaemiaGraphFragment extends Fragment {
         month = cal.get(Calendar.MONTH) + 1;    //month start with 0
         day = cal.get(Calendar.DAY_OF_MONTH);
 
+        ValidateButton();
+
         BindDate();
 
-        glycaemiaList = Glycaemia.getGlycaemiaList(getActivity(), String.format("%s%s-%s.json", getString(R.string.GlycaemiaJsonFilename), year, month));
-
-        if (glycaemiaList != null && glycaemiaList.size() > 0) {
-            generateGraph();
-        }
-
+        generateGraph();
 
         return view;
     }
 
+    private void ValidateButton() {
+        btnHbA1cValidation.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v) {
+                HbA1c hbA1c = new HbA1c(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()), Float.parseFloat(edtHbA1cCheck.getText().toString()));
+                hbA1c.set(getActivity(), getString(R.string.HbA1cJsonFilename));
+
+                tvResult.setText("Enregistré !");
+                edtHbA1cCheck.setText(null);
+
+                generateGraph();
+            }
+        });
+    }
+
     private void BindDate() {
 
-        dStart = Utils.parseDate(year + "-" + (month <= 10 ? "0" + (month-1) : (month-1)) + "-" + day); //display from a month ago ...
+        dStart = Utils.parseDate((year-1) + "-" + (month <= 9 ? "0" + month : month) + "-" + day); //display from a year ago ...
         dStop = Utils.parseDate(year + "-" + (month <= 9 ? "0" + month : month) + "-" + day);           //to today
 
         tvDateStart.setText("Du : " + android.text.format.DateFormat.format("yyyy-MM-dd", dStart));
@@ -185,83 +218,141 @@ public class GlycaemiaGraphFragment extends Fragment {
                 dialog.show();
             }
         });
-
-
     }
 
     private void generateGraph() {
         List<BubbleValue> values = new ArrayList<BubbleValue>();
         List<AxisValue> axisValues = new ArrayList<AxisValue>();
-        glycaemiaList = Glycaemia.getDateStartStopGlycaemiaList(getActivity(), getString(R.string.GlycaemiaJsonFilename), dStart, dStop);
+        hbA1cList = HbA1c.getDateStartStopHbA1cList(getActivity(), getString(R.string.HbA1cJsonFilename), dStart, dStop);   //get list from date
         Calendar currentCalendar = Calendar.getInstance();
 
-        if ( glycaemiaList != null && glycaemiaList.size() > 0 ) {
+        if ( hbA1cList != null && hbA1cList.size() > 0 ) {
             //must have one bubble with a big "Z" value to have small circle after that
-            currentCalendar.setTime(Utils.parseDateTime(glycaemiaList.get(0).getDateCreate()));
-            BubbleValue value = new BubbleValue(currentCalendar.getTimeInMillis(), glycaemiaList.get(0).getGlucoseCheck(), (float) 1000);
+            currentCalendar.setTime(Utils.parseDateTime(hbA1cList.get(0).getDate()));
+            BubbleValue value = new BubbleValue(currentCalendar.getTimeInMillis(), hbA1cList.get(0).getControl(), (float) 1000);
             value.setColor(Color.TRANSPARENT);  //color transparent to hide him
             value.setShape(ValueShape.CIRCLE);
             values.add(value);
 
             int date = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
-            for (Glycaemia g : glycaemiaList) {
-                currentCalendar.setTime(Utils.parseDateTime(g.getDateCreate()));
+            for (HbA1c h : hbA1cList) {
+                currentCalendar.setTime(Utils.parseDateTime(h.getDate()));
 
-                value = new BubbleValue(currentCalendar.getTimeInMillis(), g.getGlucoseCheck(), (float) 1);
-
-                if (g.getTimeOfTheDay() == Glycaemia.timeOfTheDayEnum.BREAKFAST.name())
-                    value.setColor(R.color.colorGraphBreakfast);
-                if (g.getTimeOfTheDay() == Glycaemia.timeOfTheDayEnum.MORNING.name())
-                    value.setColor(R.color.colorGraphMorning);
-                if (g.getTimeOfTheDay() == Glycaemia.timeOfTheDayEnum.LUNCH.name())
-                    value.setColor(R.color.colorGraphLunch);
-                if (g.getTimeOfTheDay() == Glycaemia.timeOfTheDayEnum.AFTERNOON.name())
-                    value.setColor(R.color.colorGraphAfternoon);
-                if (g.getTimeOfTheDay() == Glycaemia.timeOfTheDayEnum.DINNER.name())
-                    value.setColor(R.color.colorGraphDinner);
-                if (g.getTimeOfTheDay() == Glycaemia.timeOfTheDayEnum.SLEEP.name())
-                    value.setColor(R.color.colorGraphSleep);
-                if (g.getTimeOfTheDay() == Glycaemia.timeOfTheDayEnum.NIGHT.name())
-                    value.setColor(R.color.colorGraphNight);
-
-                value.setColor(ChartUtils.pickColor());
+                value = new BubbleValue(currentCalendar.getTimeInMillis(), h.getControl(), (float) 1);
+                value.setColor(R.color.colorPrimary);
                 value.setShape(ValueShape.CIRCLE);
                 values.add(value);
 
                 //add axis X values
                 AxisValue axisValue = new AxisValue(currentCalendar.getTimeInMillis());
                 if (currentCalendar.get(Calendar.DAY_OF_MONTH) != date)
-                    axisValue.setLabel(g.getDateCreate().substring(0, g.getDateCreate().indexOf(" ")));
+                    axisValue.setLabel(h.getDate().substring(0, h.getDate().indexOf(" ")));
                 else
                     axisValue.setLabel("");
                 axisValues.add(axisValue);
 
                 date = currentCalendar.get(Calendar.DAY_OF_MONTH);
             }
-
-            data = new BubbleChartData(values);
-            data.setHasLabels(hasLabels);
-            data.setHasLabelsOnlyForSelected(hasLabelForSelected);
-
-            if (hasAxes) {
-                Axis axisX = new Axis();
-                Axis axisY = new Axis().setHasLines(true);
-                if (hasAxesNames) {
-                    axisX.setName("Date");
-                    axisY.setName("Glycémie");
-                    axisX.setValues(axisValues);
-                }
-                data.setAxisXBottom(axisX);
-                data.setAxisYLeft(axisY);
-            } else {
-                data.setAxisXBottom(null);
-                data.setAxisYLeft(null);
-            }
-
-            chart.setBubbleChartData(data);
         }
+
+        data = new BubbleChartData(values);
+        data.setHasLabels(hasLabels);
+        data.setHasLabelsOnlyForSelected(hasLabelForSelected);
+
+        if (hasAxes) {
+            Axis axisX = new Axis();
+            Axis axisY = new Axis().setHasLines(true);
+            if (hasAxesNames) {
+                axisX.setName("Date");
+                axisY.setName("Contrôle");
+                axisX.setValues(axisValues);
+            }
+            data.setAxisXBottom(axisX);
+            data.setAxisYLeft(axisY);
+        } else {
+            data.setAxisXBottom(null);
+            data.setAxisYLeft(null);
+        }
+
+        chart.setBubbleChartData(data);
     }
 
+    private void exportPdf() {
+        /*chart.setDrawingCacheEnabled(true);
+        bitmap = Bitmap.createBitmap(chart.getDrawingCache());
+        chart.setDrawingCacheEnabled(false);*/
+
+        /*try {
+            Document document = new Document();
+
+            File path = new File( Environment.getExternalStorageDirectory(), "Diabete" );
+
+            if ( !path.exists() ){ path.mkdir(); }
+            File file = new File(path, "sample1.pdf");
+
+            PdfWriter.getInstance(document, new FileOutputStream(file));
+            document.open();
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100 , stream);
+            Image myImg = Image.getInstance(stream.toByteArray());
+            myImg.setAlignment(Image.MIDDLE);
+            document.add(myImg);
+
+            document.close();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }*/
+    }
+
+    private void exportCSV() {
+        Calendar cStart = Calendar.getInstance();
+        cStart.setTime(dStart);
+        Calendar cStop = Calendar.getInstance();
+        cStop.setTime(dStop);
+        String filename = "hba1c"+
+                cStart.get(Calendar.YEAR)+cStart.get(Calendar.MONTH)+cStart.get(Calendar.DAY_OF_MONTH) + "-" +
+                cStop.get(Calendar.YEAR)+cStop.get(Calendar.MONTH)+cStop.get(Calendar.DAY_OF_MONTH) +".csv";
+
+        ///storage/sdcard/Documents/sample1.pdf
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), filename);
+
+        //check if directory exist, and create him if not.
+        if (!Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).exists()) {
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).mkdirs();
+        }
+
+        try {
+            file.createNewFile();
+            FileOutputStream fOut = new FileOutputStream(file);
+            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+            //header
+            myOutWriter.append("\"Date\";\"Controle\"");
+            myOutWriter.append("\n");
+            for (HbA1c h : hbA1cList) {
+                //content
+                myOutWriter.append("\"" + h.getDate().replace("\"","'") + "\";\"" + h.getControl() + "\"");
+                myOutWriter.append("\n");
+            }
+            myOutWriter.close();
+            fOut.close();
+
+            //display alert message
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setCancelable(true);
+            builder.setTitle("Export CSV");
+            builder.setMessage("Le fichier "+ filename + " à bien été créée dans le dossier Documents de votre carte SD");
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) {}
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void onAttach(Context context) {

@@ -1,14 +1,19 @@
 package com.example.fdelahaye.myapplication;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -17,7 +22,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.fdelahaye.myapplication.Objects.Glycaemia;
+import com.example.fdelahaye.myapplication.Objects.Utils;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -51,8 +60,33 @@ public class GlycaemiaTabFragment extends Fragment {
     }
 
     @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        //hide all elements in OptionsMenu
+        menu.findItem(R.id.action_pdf).setVisible(false);
+        menu.findItem(R.id.action_excel).setVisible(false);
+        menu.findItem(R.id.action_csv).setVisible(true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_pdf : {
+                return true;
+            }
+            case R.id.action_excel : {
+                return true;
+            }
+            case R.id.action_csv : {
+                exportCSV();
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);    //hide OptionsMenu if no item is show
     }
 
     @Override
@@ -93,18 +127,18 @@ public class GlycaemiaTabFragment extends Fragment {
 
     private void BindDate() {
 
-        dStart = parseDate(year + "/" + (month-1) + "/" + day);
-        dStop = parseDate(year + "/" + month + "/" + day);
+        dStart = Utils.parseDate(year + "-" + (month <= 10 ? "0" + (month-1) : (month-1)) + "-" + day); //display from a month ago ...
+        dStop = Utils.parseDate(year + "-" + (month <= 9 ? "0" + month : month) + "-" + day);           //to today
 
-        tvDateStart.setText("Du : " + android.text.format.DateFormat.format("yyyy/MM/dd", dStart));
-        tvDateStop.setText(" Au : " + android.text.format.DateFormat.format("yyyy/MM/dd", dStop));
+        tvDateStart.setText("Du : " + android.text.format.DateFormat.format("yyyy-MM-dd", dStart));
+        tvDateStop.setText(" Au : " + android.text.format.DateFormat.format("yyyy-MM-dd", dStop));
 
         mDataSetListenerStart = new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
                 month = month + 1;
-                dStart = parseDate(year + "/" + month + "/" + dayOfMonth);
-                tvDateStart.setText("Du : " + android.text.format.DateFormat.format("yyyy/MM/dd", dStart));
+                dStart = Utils.parseDate(year + "-" + month + "-" + dayOfMonth);
+                tvDateStart.setText("Du : " + android.text.format.DateFormat.format("yyyy-MM-dd", dStart));
 
                 BindContent();
             }
@@ -114,8 +148,8 @@ public class GlycaemiaTabFragment extends Fragment {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
                 month = month + 1;
-                dStop = parseDate(year + "/" + month + "/" + dayOfMonth);
-                tvDateStop.setText(" Au : " + android.text.format.DateFormat.format("yyyy/MM/dd", dStop));
+                dStop = Utils.parseDate(year + "-" + month + "-" + dayOfMonth);
+                tvDateStop.setText(" Au : " + android.text.format.DateFormat.format("yyyy-MM-dd", dStop));
 
                 BindContent();
             }
@@ -124,14 +158,18 @@ public class GlycaemiaTabFragment extends Fragment {
         tvDateStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                DatePickerDialog dialog = new DatePickerDialog(getActivity(), android.R.style.Theme_Holo_Dialog, mDataSetListenerStart, year,month-2,day);  //current date
+                Calendar cStart = Calendar.getInstance();
+                cStart.setTime(dStart);
+                DatePickerDialog dialog = new DatePickerDialog(getActivity(), android.R.style.Theme_Holo_Dialog, mDataSetListenerStart, cStart.get(Calendar.YEAR), cStart.get(Calendar.MONTH),cStart.get(Calendar.DAY_OF_MONTH));  //current date
                 dialog.show();
             }
         });
         tvDateStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                DatePickerDialog dialog = new DatePickerDialog(getActivity(), android.R.style.Theme_Holo_Dialog, mDataSetListenerStop, year,month-1,day);   //current date a month ago
+                Calendar cStop = Calendar.getInstance();
+                cStop.setTime(dStop);
+                DatePickerDialog dialog = new DatePickerDialog(getActivity(), android.R.style.Theme_Holo_Dialog, mDataSetListenerStop, cStop.get(Calendar.YEAR), cStop.get(Calendar.MONTH),cStop.get(Calendar.DAY_OF_MONTH));   //current date a month ago
                 dialog.show();
             }
         });
@@ -162,7 +200,7 @@ public class GlycaemiaTabFragment extends Fragment {
         ArrayList<Integer> widthList = new ArrayList<>(Arrays.asList(250,100,200,200,150,220,150,120,120,120,200,500));
 
         for (String t : titreList) {
-            TextView tv = AddCell(t);
+            TextView tv = Utils.AddCell(getActivity(), t);
             tv.setLayoutParams(new LinearLayout.LayoutParams(widthList.get(titreList.indexOf(t)), LinearLayout.LayoutParams.WRAP_CONTENT));
 
             if(t.equals("Commentaire")) tv.setGravity(Gravity.LEFT);
@@ -190,8 +228,8 @@ public class GlycaemiaTabFragment extends Fragment {
 
                 //current date
                 Calendar currentCalendar = Calendar.getInstance();
-                currentCalendar.setTime(parseDateTime( g.getDateCreate()));
-                Date currentDate = parseDate(currentCalendar.get(Calendar.YEAR) + "/" + currentCalendar.get(Calendar.MONTH) + "/" + currentCalendar.get(Calendar.DAY_OF_MONTH));
+                currentCalendar.setTime(Utils.parseDateTime( g.getDateCreate()));
+                Date currentDate = Utils.parseDate(currentCalendar.get(Calendar.YEAR) + "-" + currentCalendar.get(Calendar.MONTH) + "-" + currentCalendar.get(Calendar.DAY_OF_MONTH));
 
                 //manage color.
                 if (!previousDate.equals(currentDate))    indexColor ++;
@@ -227,7 +265,7 @@ public class GlycaemiaTabFragment extends Fragment {
                 for (String t : titreList) {
                     int index = titreList.indexOf(t);   //get index
 
-                    TextView tv = AddCell( valueList.get(index) );
+                    TextView tv = Utils.AddCell( getActivity(), valueList.get(index) );
                     tv.setLayoutParams(new LinearLayout.LayoutParams( widthList.get( index ), LinearLayout.LayoutParams.WRAP_CONTENT) );
 
                     if(t.equals("Commentaire")) tv.setGravity(Gravity.LEFT);
@@ -244,38 +282,92 @@ public class GlycaemiaTabFragment extends Fragment {
                 content.addView(divider);
 
                 //set previousDate
-                previousCalendar.setTime(parseDateTime(g.getDateCreate()));
-                previousDate = parseDate(previousCalendar.get(Calendar.YEAR) + "/" + previousCalendar.get(Calendar.MONTH) + "/" + previousCalendar.get(Calendar.DAY_OF_MONTH));
+                previousCalendar.setTime(Utils.parseDateTime(g.getDateCreate()));
+                previousDate = Utils.parseDate(previousCalendar.get(Calendar.YEAR) + "-" + previousCalendar.get(Calendar.MONTH) + "-" + previousCalendar.get(Calendar.DAY_OF_MONTH));
 
             }
         }
     }
 
+    private void exportCSV() {
+        Calendar cStart = Calendar.getInstance();
+        cStart.setTime(dStart);
+        Calendar cStop = Calendar.getInstance();
+        cStop.setTime(dStop);
+        String filename = "glycemie"+
+                cStart.get(Calendar.YEAR)+cStart.get(Calendar.MONTH)+cStart.get(Calendar.DAY_OF_MONTH) + "-" +
+                cStop.get(Calendar.YEAR)+cStop.get(Calendar.MONTH)+cStop.get(Calendar.DAY_OF_MONTH) +".csv";
 
-    //region Utils
-    private TextView AddCell(String text) {
-        TextView tv = new TextView(getActivity());
-        tv.setText(text);
-        tv.setGravity(Gravity.CENTER);
-        return tv;
-    }
+        ///storage/sdcard/Documents/sample1.pdf
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), filename);
 
-    private Date parseDate(String date) {
+        //check if directory exist, and create him if not.
+        if (!Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).exists()) {
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).mkdirs();
+        }
+
         try {
-            return new SimpleDateFormat("yyyy/MM/dd").parse(date);
-        } catch (java.text.ParseException e) {
-            return new Date(0);
+            file.createNewFile();
+            FileOutputStream fOut = new FileOutputStream(file);
+            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+            //header
+            ArrayList<String> titreList = new ArrayList<>(Arrays.asList("Date", "Zone", "Moment de la journée", "Contrôle glycémique", "Glucide repas", "Insuline alimentation", "Insuline soin", "Bolus", "Ratio", "Index soin", "Objectif", "Commentaire"));
+            boolean isFirst = true;
+            for (String s : titreList) {
+                if(isFirst) {   // don't insert ";" for first one
+                    myOutWriter.append("\""+ s + "\"");
+                    isFirst = false;
+                } else {
+                    myOutWriter.append(";\"" + s + "\"");    //next one insert ";" then title value
+                }
+            }
+            myOutWriter.append("\n");
+
+            //content
+            for (Glycaemia g : glycaemiaList) {
+                isFirst = true;
+                ArrayList<String> valueList = new ArrayList<>(Arrays.asList(
+                        g.getDateCreate(),
+                        g.getInjectionBody(),
+                        g.getTimeOfTheDay().replace("BREAKFAST", "Petit déjeuner").replace("MORNING", "Matinée").replace("LUNCH", "Déjeuner").replace("AFTERNOON", "Après-midi").replace("DINNER", "Diner").replace("SLEEP", "Coucher").replace("NIGHT", "Nuit"),
+                        g.getGlucoseCheck() > 0 ? String.valueOf(g.getGlucoseCheck()) : "-",
+                        g.getGlucoseFood() > 0 ? String.valueOf(g.getGlucoseFood()) : "-",
+                        g.getInsulineMeal() > 0 ? String.format("%.2f", g.getInsulineMeal()) : "-",
+                        g.getInsulineTreat() > 0 ? String.format("%.2f", g.getInsulineTreat()) : "-",
+                        g.getBolus() > 0 ? String.format("%.2f", g.getBolus()) : "-",
+                        g.getRatio() > 0 ? String.format("%.2f", g.getRatio()) : "-",
+                        g.getIndexTreat() > 0 ? String.format("%.2f", g.getIndexTreat()) : "-",
+                        g.getObjective() > 0 ? String.format("%.0f", g.getObjective()) : "-",
+                        g.getComment()));
+
+                for (String s : valueList) {
+                    if(isFirst) {   // don't insert ";" for first one
+                        myOutWriter.append("\""+ s + "\"");
+                        isFirst = false;
+                    } else {
+                        myOutWriter.append(";\"" + s + "\"");    //next one insert ";" then title value
+                    }
+                }
+                myOutWriter.append("\n");
+            }
+            myOutWriter.close();
+            fOut.close();
+
+            //display alert message
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setCancelable(true);
+            builder.setTitle("Export CSV");
+            builder.setMessage("Le fichier "+ filename + " à bien été créée dans le dossier Documents de votre carte SD");
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) {}
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         }
     }
-
-    private Date parseDateTime(String date) {
-        try {
-            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(date);
-        } catch (java.text.ParseException e) {
-            return new Date(0);
-        }
-    }
-    //endregion
 
     @Override
     public void onAttach(Context context) {

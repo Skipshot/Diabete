@@ -4,7 +4,9 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="action_settings">Settings</string>
+    <string name="action_pdf_export">Export PDF</string>
+    <string name="action_excel_export">Export Excel</string>
+    <string name="action_csv_export">Export CSV</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
@@ -14,4 +16,5 @@
     <string name="strLunch">lunch</string>
     <string name="strDinner">dinner</string>
     <string name="strNouveauControleEnregistre">Nouveau contrôle enregistré !</string>
+    <string name="HbA1cJsonFilename">HbA1c.json</string>
 </resources>

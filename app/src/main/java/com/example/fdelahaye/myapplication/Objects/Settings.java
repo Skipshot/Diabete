@@ -3,19 +3,11 @@ package com.example.fdelahaye.myapplication.Objects;
 import android.content.Context;
 import android.text.TextUtils;
 
-import com.example.fdelahaye.myapplication.JsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.w3c.dom.Text;
-
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Created by fdelahaye on 29/05/2017.
@@ -36,6 +28,7 @@ public class Settings {
     private String hourDinner;
     private boolean notificationHbA1c;
     private String delaisNotifHbA1c;
+    private String delaisChangePlaceInjection;
 
     //region Contructor
     public Settings() {
@@ -184,5 +177,14 @@ public class Settings {
     public void setDelaisNotifHbA1c(String delaisNotifHbA1c) {
         this.delaisNotifHbA1c = delaisNotifHbA1c;
     }
+
+    public String getDelaisChangePlaceInjection() {
+        return delaisChangePlaceInjection;
+    }
+
+    public void setDelaisChangePlaceInjection(String delaisChangePlaceInjection) {
+        this.delaisChangePlaceInjection = delaisChangePlaceInjection;
+    }
+
     //endregion
 }

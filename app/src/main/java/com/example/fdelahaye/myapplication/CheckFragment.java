@@ -1,13 +1,17 @@
 package com.example.fdelahaye.myapplication;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -23,12 +27,14 @@ import android.widget.TextView;
 
 import com.example.fdelahaye.myapplication.Objects.Glycaemia;
 import com.example.fdelahaye.myapplication.Objects.Settings;
+import com.example.fdelahaye.myapplication.Objects.Utils;
 import com.example.fdelahaye.myapplication.Objects.Validation;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -47,12 +53,13 @@ public class CheckFragment extends Fragment {
 
     private Calendar calendar;
     private String timeOfTheDay;
+    private Date lastPlaceInjectionDate;
 
     private Button btnGlucoseValidation;
     private EditText edtGlucoseCheck, edtGlucoseFood, edtComment, edtBolusCorrection;
     private TextView tvResultBolus, tvResultBolusDetail, tvResultDetailCalcul;
     private LinearLayout linlayGlucoseFood, linlayBolusCorrection, linlayRemind;
-    private Spinner spinTimeOfTheDay;
+    private Spinner spinTimeOfTheDay, spinChangePlaceInjection;
 
     private OnFragmentInteractionListener mListener;
 
@@ -61,8 +68,17 @@ public class CheckFragment extends Fragment {
     }
 
     @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        //hide all elements in OptionsMenu
+        menu.findItem(R.id.action_pdf).setVisible(false);
+        menu.findItem(R.id.action_excel).setVisible(false);
+        menu.findItem(R.id.action_csv).setVisible(false);
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);    //hide OptionsMenu if no item is show
     }
 
     @Override
@@ -87,6 +103,7 @@ public class CheckFragment extends Fragment {
         linlayBolusCorrection = (LinearLayout)view.findViewById(R.id.linlayBolusCorrection);
         linlayRemind = (LinearLayout)view.findViewById(R.id.linlayRemind);
         spinTimeOfTheDay = (Spinner)view.findViewById(R.id.spinTimeOfTheDay);
+        spinChangePlaceInjection = (Spinner)view.findViewById(R.id.spinChangePlaceInjection);
 
         return view;
     }
@@ -108,7 +125,12 @@ public class CheckFragment extends Fragment {
 
             if (!TextUtils.isEmpty(timeOfTheDay)) {
 
+
                 spinTimeOfTheDay.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, Glycaemia.timeOfTheDayEnum.values()));
+                String [] changePlaceInjection = {"ventre", "cuisse", "fesse", "hanche"};
+                spinChangePlaceInjection.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, changePlaceInjection));
+
+                setPlaceInjection();
 
                 UpdateScreen();
                 //bind TableLayout with 7 last check in the same time of the day
@@ -140,14 +162,14 @@ public class CheckFragment extends Fragment {
         ArrayList<Glycaemia> todayGlycaemiaList = Glycaemia.getTodayGlycaemiaList(glycaemiaList);
 
         //set current time
-        Date currentTime = parseTime(calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE));
+        Date currentTime = Utils.parseTime(calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE));
 
         //breakfast
-        if(currentTime.after(parseTime(settings.getHourBreakfast())))    timeOfTheDay = Glycaemia.timeOfTheDayEnum.BREAKFAST.name();
+        if(currentTime.after(Utils.parseTime(settings.getHourBreakfast())))    timeOfTheDay = Glycaemia.timeOfTheDayEnum.BREAKFAST.name();
         //lunch
-        if(currentTime.after(parseTime(settings.getHourLunch())))        timeOfTheDay = Glycaemia.timeOfTheDayEnum.LUNCH.name();
+        if(currentTime.after(Utils.parseTime(settings.getHourLunch())))        timeOfTheDay = Glycaemia.timeOfTheDayEnum.LUNCH.name();
         //dinner
-        if(currentTime.after(parseTime(settings.getHourDinner())))       timeOfTheDay = Glycaemia.timeOfTheDayEnum.DINNER.name();
+        if(currentTime.after(Utils.parseTime(settings.getHourDinner())))       timeOfTheDay = Glycaemia.timeOfTheDayEnum.DINNER.name();
 
         //define if user already check something at this moment of the day (ex : if user have already checked his glycaemia on breakfast)
         if (todayGlycaemiaList != null && todayGlycaemiaList.size() > 0) {
@@ -167,11 +189,47 @@ public class CheckFragment extends Fragment {
         }
     }
 
+    private void setPlaceInjection() {
+        SharedPreferences sharedPrefs = getActivity().getSharedPreferences("lastPlaceInjectionDate", Context.MODE_PRIVATE);
+        String spLastPlaceInjectionDate = sharedPrefs.getString("lastPlaceInjectionDate", "");
+        Glycaemia.placeInjectionEnum placeInjectionEnum = null;
+
+        if(spLastPlaceInjectionDate  != "") {
+            //sharedPreferences - lastPlaceInjectionDate = "yyyy-MM/dd|placeInjectionEnum"
+            lastPlaceInjectionDate = Utils.parseDate( spLastPlaceInjectionDate.substring(0, spLastPlaceInjectionDate.indexOf("|")) );    //get date
+            int placeInjectionIndex = Integer.parseInt( spLastPlaceInjectionDate.substring(spLastPlaceInjectionDate.indexOf("|") +1 ) );
+
+            placeInjectionEnum = Glycaemia.placeInjectionEnum.values()[placeInjectionIndex];
+            spinChangePlaceInjection.setSelection(placeInjectionEnum.getPosition());  //get index of selection
+        }
+
+        int index = settings.getDelaisChangePlaceInjection().indexOf(" ");
+        int delaisNumber = Integer.parseInt(settings.getDelaisChangePlaceInjection().substring(0, index )); //get number
+
+        long dateDiff = lastPlaceInjectionDate.getTime() - new Date().getTime();
+
+        if ( lastPlaceInjectionDate == null || TimeUnit.DAYS.convert(dateDiff, TimeUnit.MILLISECONDS) < delaisNumber) {
+            //if place injection's date is outdated, we save the new date and the new placeInjectionEnum.
+            placeInjectionEnum = spLastPlaceInjectionDate  != "" && placeInjectionEnum != null ? placeInjectionEnum.next() : Glycaemia.placeInjectionEnum.BELLY;     //get next placeInjectionEnum or initialize
+
+            //save new values in sharedPreferences.
+            sharedPrefs = getActivity().getSharedPreferences("lastPlaceInjectionDate", Context.MODE_PRIVATE);
+            SharedPreferences.Editor edt = sharedPrefs.edit();
+            edt.putString("lastPlaceInjectionDate",
+                    calendar.get(Calendar.YEAR) + "-" + (calendar.get(Calendar.MONTH)+1) + "-" + calendar.get(Calendar.DAY_OF_MONTH)
+                            + "|" + placeInjectionEnum.getPosition());
+            edt.commit();
+
+            //change Spinner's selection.
+            spinChangePlaceInjection.setSelection(placeInjectionEnum.getPosition());
+        }
+    }
+
     private void EventsInit() {
         edtGlucoseCheck.setInputType(InputType.TYPE_CLASS_NUMBER);
         edtGlucoseCheck.addTextChangedListener(new Validation(edtGlucoseCheck) {
             @Override public void validate() {
-                if(isNumber(edtGlucoseCheck, true) && isFieldsValid()) {
+                if(isNumber(edtGlucoseCheck, true) && Utils.isFieldsValid(edtGlucoseCheck, edtGlucoseFood, timeOfTheDay)) {
                     btnGlucoseValidation.setEnabled(true);
                 } else btnGlucoseValidation.setEnabled(false);
             }
@@ -180,7 +238,7 @@ public class CheckFragment extends Fragment {
         edtGlucoseFood.setInputType(InputType.TYPE_CLASS_NUMBER);
         edtGlucoseFood.addTextChangedListener(new Validation(edtGlucoseFood) {
             @Override public void validate() {
-                if(isNumber(edtGlucoseFood, true) && isFieldsValid()) {
+                if(isNumber(edtGlucoseFood, true) && Utils.isFieldsValid(edtGlucoseCheck, edtGlucoseFood, timeOfTheDay)) {
                     btnGlucoseValidation.setEnabled(true);
                 } else btnGlucoseValidation.setEnabled(false);
             }
@@ -189,7 +247,7 @@ public class CheckFragment extends Fragment {
         edtBolusCorrection.setInputType(InputType.TYPE_CLASS_NUMBER);
         edtBolusCorrection.addTextChangedListener(new Validation(edtBolusCorrection) {
             @Override public void validate() {
-                if(isNumber(edtBolusCorrection, false) && isFieldsValid()) {
+                if(isNumber(edtBolusCorrection, false) && Utils.isFieldsValid(edtGlucoseCheck, edtGlucoseFood, timeOfTheDay)) {
                     btnGlucoseValidation.setEnabled(true);
                 } else btnGlucoseValidation.setEnabled(false);
             }
@@ -209,7 +267,7 @@ public class CheckFragment extends Fragment {
                 float index = 0.0f;
                 float ratio = 0.0f;
                 //calculs
-                if (isMeal()) {
+                if (Utils.isMeal(timeOfTheDay)) {
                     food = Short.parseShort(edtGlucoseFood.getText().toString());
                     goal = settings.getGoalBeforeMeal();
                     if (timeOfTheDay.equals(Glycaemia.timeOfTheDayEnum.BREAKFAST.name())) {
@@ -247,7 +305,7 @@ public class CheckFragment extends Fragment {
                         index,
                         goal,
                         null,
-                        "ventre",
+                        spinChangePlaceInjection.getSelectedItem().toString(),
                         edtComment.getText().toString()
                 );
 
@@ -256,7 +314,7 @@ public class CheckFragment extends Fragment {
                     //find the glycamia to update
                     for(Glycaemia g : glycaemiaList) {
                         if(g.getDateCreate() != null &&
-                                parseDate(g.getDateCreate()).compareTo(parseDate(new SimpleDateFormat("yyyy-MM-dd").format(new Date()))) == 0 &&  //compare with current date
+                                Utils.parseDate(g.getDateCreate()).compareTo(Utils.parseDate(new SimpleDateFormat("yyyy-MM-dd").format(new Date()))) == 0 &&  //compare with current date
                                 g.getTimeOfTheDay().equals(timeOfTheDay)) { //compare timeOfTheDay
 
                             newGlycaemia.setDateCreate(g.getDateCreate());      //we don't want to change dateCreate
@@ -273,7 +331,7 @@ public class CheckFragment extends Fragment {
                 BindRemind();
 
                 //display text after UpdateScreen
-                if(isMeal()) {
+                if(Utils.isMeal(timeOfTheDay)) {
                     tvResultBolus.setText(String.format("Insuline Bolus : %.2f.", bolus));
                     tvResultBolusDetail.setText(String.format("Dont %.2f pour l'alimentaire et %.2f pour le soin.", insulineMeal, insulineTreat));
                     tvResultDetailCalcul.setText(String.format("Calcul alimentaire : ( %.2f * %d ) / 10 = %.2f \r\nCalcul soin : ( %d - %d ) / ( 100 * %.2f ) = %.2f ", ratio, food, insulineMeal, check, goal, index, insulineTreat));
@@ -298,7 +356,7 @@ public class CheckFragment extends Fragment {
 
         //------ Update elements
         //have to show/hide some elements when it is morning, afternoon, sleep or night
-        if (!isMeal()) {
+        if (!Utils.isMeal(timeOfTheDay)) {
             linlayGlucoseFood.setVisibility(View.INVISIBLE);
             linlayBolusCorrection.setVisibility(View.VISIBLE);
         } else {
@@ -309,7 +367,7 @@ public class CheckFragment extends Fragment {
         //update spinner
         spinTimeOfTheDay.setSelection(Glycaemia.timeOfTheDayEnum.valueOf(timeOfTheDay).getPosition());
         //if we have update spinner on time of the day who is a meal
-        if(isMeal()) {
+        if(Utils.isMeal(timeOfTheDay)) {
             //get Glycaemia List of today
             ArrayList<Glycaemia> todayGlycaemiaList = Glycaemia.getTodayGlycaemiaList(glycaemiaList);
 
@@ -334,6 +392,7 @@ public class CheckFragment extends Fragment {
     }
 
     private void BindRemind() {
+        //TODO : Remind : remind disapeare when new month start (get file from current month, but this file is empty)
         ArrayList<Glycaemia> remingGlycaemiaList = Glycaemia.getRemindGlycaemiaList(glycaemiaList, timeOfTheDay);
 
         //reset
@@ -353,27 +412,27 @@ public class CheckFragment extends Fragment {
             llHead.setOrientation(LinearLayout.HORIZONTAL);
             llHead.setWeightSum(15);
 
-            TextView tvHead1 = AddCell("Date");
+            TextView tvHead1 = Utils.AddCell(getActivity(), "Date");
             tvHead1.setLayoutParams(new LinearLayout.LayoutParams(300, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead1);
 
-            TextView tvHead2 = AddCell("Contrôle\r\nglycémique");
+            TextView tvHead2 = Utils.AddCell(getActivity(), "Contrôle\r\nglycémique");
             tvHead2.setLayoutParams(new LinearLayout.LayoutParams(200, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead2);
 
-            TextView tvHead3 = AddCell("Glucide\r\nrepas");
+            TextView tvHead3 = Utils.AddCell(getActivity(), "Glucide\r\nrepas");
             tvHead3.setLayoutParams(new LinearLayout.LayoutParams(150, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead3);
 
-            TextView tvHead4 = AddCell("Insuline\r\nalimentation");
+            TextView tvHead4 = Utils.AddCell(getActivity(), "Insuline\r\nalimentation");
             tvHead4.setLayoutParams(new LinearLayout.LayoutParams(220, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead4);
 
-            TextView tvHead5 = AddCell("Insuline\r\nsoin");
+            TextView tvHead5 = Utils.AddCell(getActivity(), "Insuline\r\nsoin");
             tvHead5.setLayoutParams(new LinearLayout.LayoutParams(150, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead5);
 
-            TextView tvHead6 = AddCell("Bolus");
+            TextView tvHead6 = Utils.AddCell(getActivity(), "Bolus");
             tvHead6.setLayoutParams(new LinearLayout.LayoutParams(100, LinearLayout.LayoutParams.WRAP_CONTENT));
             llHead.addView(tvHead6);
 
@@ -381,7 +440,7 @@ public class CheckFragment extends Fragment {
             linlayRemind.addView(dividerHeader);
 
             //datas
-            for(Glycaemia g : remingGlycaemiaList) {
+            for (Glycaemia g : remingGlycaemiaList) {
 
                 //lines
                 LinearLayout ligne = new LinearLayout(getActivity());
@@ -400,27 +459,27 @@ public class CheckFragment extends Fragment {
                 });
 
 
-                TextView tv1 = AddCell( g.getDateCreate().replace(" ", "\r\n") );                                        //Date
+                TextView tv1 = Utils.AddCell( getActivity(), g.getDateCreate().replace(" ", "\r\n") );                                        //Date
                 tv1.setLayoutParams(new LinearLayout.LayoutParams(300, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv1);
 
-                TextView tv2 = AddCell( g.getGlucoseCheck() > 0 ? String.valueOf( g.getGlucoseCheck() ) : "-" );         //Glucose Check
+                TextView tv2 = Utils.AddCell( getActivity(), g.getGlucoseCheck() > 0 ? String.valueOf( g.getGlucoseCheck() ) : "-" );         //Glucose Check
                 tv2.setLayoutParams(new LinearLayout.LayoutParams(200, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv2);
 
-                TextView tv3 = AddCell( g.getGlucoseFood() > 0 ? String.valueOf( g.getGlucoseFood() ) : "-" );           //Glucose Food
+                TextView tv3 = Utils.AddCell( getActivity(), g.getGlucoseFood() > 0 ? String.valueOf( g.getGlucoseFood() ) : "-" );           //Glucose Food
                 tv3.setLayoutParams(new LinearLayout.LayoutParams(150, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv3);
 
-                TextView tv4 = AddCell( g.getInsulineMeal() > 0 ? String.format( "%.2f", g.getInsulineMeal() ) : "-" );  //Insuline Meal
+                TextView tv4 = Utils.AddCell( getActivity(), g.getInsulineMeal() > 0 ? String.format( "%.2f", g.getInsulineMeal() ) : "-" );  //Insuline Meal
                 tv4.setLayoutParams(new LinearLayout.LayoutParams(220, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv4);
 
-                TextView tv5 = AddCell( g.getInsulineTreat() > 0 ? String.format( "%.2f", g.getInsulineTreat() ) : "-" );//Insuline Treat
+                TextView tv5 = Utils.AddCell( getActivity(), g.getInsulineTreat() > 0 ? String.format( "%.2f", g.getInsulineTreat() ) : "-" );//Insuline Treat
                 tv5.setLayoutParams(new LinearLayout.LayoutParams(150, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv5);
 
-                TextView tv6 = AddCell( g.getBolus() > 0 ? String.format( "%.2f", g.getBolus() ) : "-" );                //Bolus
+                TextView tv6 = Utils.AddCell( getActivity(), g.getBolus() > 0 ? String.format( "%.2f", g.getBolus() ) : "-" );                //Bolus
                 tv6.setLayoutParams(new LinearLayout.LayoutParams(100, LinearLayout.LayoutParams.WRAP_CONTENT));
                 ligne.addView(tv6);
 
@@ -434,57 +493,6 @@ public class CheckFragment extends Fragment {
             }
         }
     }
-
-
-    //region Utils
-    private TextView AddCell(String text) {
-        TextView tv = new TextView(getActivity());
-        tv.setText(text);
-        tv.setGravity(Gravity.CENTER);
-        return tv;
-    }
-
-    private Date parseTime(String date) {
-        try {
-            return new SimpleDateFormat("HH:mm").parse(date);
-        } catch (java.text.ParseException e) {
-            return new Date(0);
-        }
-    }
-
-    private Date parseDate(String date) {
-        try {
-            return new SimpleDateFormat("yyyy-MM-dd").parse(date);
-        } catch (java.text.ParseException e) {
-            return new Date(0);
-        }
-    }
-
-    private boolean isMeal() {
-        if(!TextUtils.isEmpty(this.timeOfTheDay))
-            return this.timeOfTheDay.equals(Glycaemia.timeOfTheDayEnum.BREAKFAST.name()) ||
-                    this.timeOfTheDay.equals(Glycaemia.timeOfTheDayEnum.LUNCH.name()) ||
-                    this.timeOfTheDay.equals(Glycaemia.timeOfTheDayEnum.DINNER.name());
-        else
-            return false;
-    }
-
-    private boolean isFieldsValid() {
-        if(isMeal())
-            return !TextUtils.isEmpty(edtGlucoseCheck.getText().toString()) &&
-                    !TextUtils.isEmpty(edtGlucoseFood.getText().toString());
-        else
-            return !TextUtils.isEmpty(edtGlucoseCheck.getText().toString());
-    }
-    //endregion
-
-
-    // TODO: Rename method, update argument and hook method into UI event
-    /*public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }*/
 
     @Override
     public void onAttach(Context context) {

@@ -34,9 +34,9 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:support-v4:25.3.1'
 
+    compile group: 'com.itextpdf', name: 'itextpdf', version: '5.5.11'
     compile 'com.google.code.gson:gson:2.2.4'
     compile 'com.github.lecho:hellocharts-library:1.5.8@aar'
     compile 'com.github.lecho:hellocharts-android:v1.5.8'
-
     testCompile 'junit:junit:4.12'
 }

@@ -6,6 +6,9 @@
             android:id="@+id/nav_fragment_check"
             android:title="Check" />
         <item
+            android:id="@+id/nav_fragment_hba1c"
+            android:title="HbA1c" />
+        <item
             android:id="@+id/nav_fragment_settings"
             android:icon="@drawable/ic_menu_manage"
             android:title="Settings" />
@@ -13,18 +16,14 @@
 
     <item android:title="Export">
         <menu>
-            <item
-                android:id="@+id/nav_fragment_HbA1c_graph"
-                android:title="Graphique HbA1c" />
-            <item
-                android:id="@+id/nav_fragment_HbA1c_tab"
-                android:title="Tableau HbA1c" />
-            <item
-                android:id="@+id/nav_fragment_glycaemia_graph"
-                android:title="Graphique Glycémique" />
-            <item
-                android:id="@+id/nav_fragment_glycaemia_tab"
-                android:title="Tableau Glycémie" />
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/nav_fragment_glycaemia_graph"
+                    android:title="Graphique Glycémique" />
+                <item
+                    android:id="@+id/nav_fragment_glycaemia_tab"
+                    android:title="Tableau Glycémie" />
+            </group>
         </menu>
     </item>
 

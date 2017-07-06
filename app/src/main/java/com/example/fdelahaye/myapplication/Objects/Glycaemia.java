@@ -2,15 +2,9 @@ package com.example.fdelahaye.myapplication.Objects;
 
 import android.content.Context;
 
-import com.example.fdelahaye.myapplication.JsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.lang.reflect.Type;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -60,6 +54,26 @@ public class Glycaemia {
         }
     }
 
+    public enum placeInjectionEnum {
+        BELLY(0),
+        HIP(1),
+        BUTTOCK(2),
+        LEG(3);
+
+        private final int position;
+        private static placeInjectionEnum[] vals = values();
+
+        placeInjectionEnum(int position) {
+            this.position = position;
+        }
+        public int getPosition() {
+            return position;
+        }
+        public placeInjectionEnum next() {
+            return vals[(this.ordinal()+1) % vals.length];
+        }
+    }
+
     //region Constructor
     public Glycaemia() {}
 
@@ -97,21 +111,16 @@ public class Glycaemia {
 
     public static ArrayList<Glycaemia> getTodayGlycaemiaList(ArrayList<Glycaemia> glycaemiaList) {
         ArrayList<Glycaemia> todayList = new ArrayList<Glycaemia>();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        try {
-            for (Glycaemia glycaemia : glycaemiaList) {
-                Calendar calGlycaemia = Calendar.getInstance();
-                Calendar calToday = Calendar.getInstance();
-                calGlycaemia.setTime(sdf.parse(glycaemia.getDateCreate()));
+        for (Glycaemia glycaemia : glycaemiaList) {
+            Calendar calGlycaemia = Calendar.getInstance();
+            Calendar calToday = Calendar.getInstance();
+            calGlycaemia.setTime(Utils.parseDate(glycaemia.getDateCreate()));
 
-                if (calGlycaemia.get(Calendar.YEAR) == calToday.get(Calendar.YEAR) &&
-                    calGlycaemia.get(Calendar.DAY_OF_YEAR) == calToday.get(Calendar.DAY_OF_YEAR)) {
+            if (calGlycaemia.get(Calendar.YEAR) == calToday.get(Calendar.YEAR) &&
+                calGlycaemia.get(Calendar.DAY_OF_YEAR) == calToday.get(Calendar.DAY_OF_YEAR)) {
 
-                        todayList.add(glycaemia);
-                }
+                    todayList.add(glycaemia);
             }
-        } catch (ParseException ex) {
-            ex.printStackTrace();
         }
 
         return todayList;
@@ -128,23 +137,15 @@ public class Glycaemia {
         Collections.sort(glycaemiaList, new Comparator<Glycaemia>() {
             @Override
             public int compare(Glycaemia o1, Glycaemia o2) {
-                try {
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Calendar c1 = Calendar.getInstance();
+            c1.setTime(Utils.parseDate(o1.getDateCreate()));
 
-                    Calendar c1 = Calendar.getInstance();
-                    c1.setTime(sdf.parse(o1.getDateCreate()));
+            Calendar c2 = Calendar.getInstance();
+            c2.setTime(Utils.parseDate(o2.getDateCreate()));
 
-                    Calendar c2 = Calendar.getInstance();
-                    c2.setTime(sdf.parse(o2.getDateCreate()));
-
-                    return c2.compareTo(c1);        //descending
-                    // return c1.compareTo(c2);     //ascending
-                    //return o1.getDate().compareTo(o2.getDate());      //origin
-                }
-                catch (ParseException ex) {
-                    ex.printStackTrace();
-                }
-                return 0;
+            return c2.compareTo(c1);        //descending
+            // return c1.compareTo(c2);     //ascending
+            //return o1.getDate().compareTo(o2.getDate());      //origin
             }
         });
 
@@ -185,10 +186,9 @@ public class Glycaemia {
             }
         }
 
-        //TODO : foreach with iterator, need to transform iterator to arraylist
         for (Iterator<Glycaemia> iterator = glycaemiaList.iterator(); iterator.hasNext();) {
             Glycaemia g = iterator.next();
-            Date currentDate = parseDate(g.getDateCreate());
+            Date currentDate = Utils.parseDate(g.getDateCreate());
             if (currentDate.before(dStart) || currentDate.after(dStop)) {
                 iterator.remove();
             }
@@ -198,23 +198,15 @@ public class Glycaemia {
         Collections.sort(glycaemiaList, new Comparator<Glycaemia>() {
             @Override
             public int compare(Glycaemia o1, Glycaemia o2) {
-                try {
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                Calendar c1 = Calendar.getInstance();
+                c1.setTime(Utils.parseDate(o1.getDateCreate()));
 
-                    Calendar c1 = Calendar.getInstance();
-                    c1.setTime(sdf.parse(o1.getDateCreate()));
+                Calendar c2 = Calendar.getInstance();
+                c2.setTime(Utils.parseDate(o2.getDateCreate()));
 
-                    Calendar c2 = Calendar.getInstance();
-                    c2.setTime(sdf.parse(o2.getDateCreate()));
-
-                    return c2.compareTo(c1);        //descending
-                    // return c1.compareTo(c2);     //ascending
-                    //return o1.getDate().compareTo(o2.getDate());      //origin
-                }
-                catch (ParseException ex) {
-                    ex.printStackTrace();
-                }
-                return 0;
+                return c2.compareTo(c1);        //descending
+                // return c1.compareTo(c2);     //ascending
+                //return o1.getDate().compareTo(o2.getDate());      //origin
             }
         });
 
@@ -223,14 +215,6 @@ public class Glycaemia {
 
     public static void WriteGlycaemiaFile(List<Glycaemia> glycaemiaList, Context context, String filename) {
         JsonUtil.writeToFile(new Gson().toJson(glycaemiaList), context, filename);
-    }
-
-    private static Date parseDate(String date) {
-        try {
-            return new SimpleDateFormat("yyyy-MM-dd").parse(date);
-        } catch (java.text.ParseException e) {
-            return new Date(0);
-        }
     }
 
     //endregion
